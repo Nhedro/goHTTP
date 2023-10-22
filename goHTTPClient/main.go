@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -52,7 +51,7 @@ func main() {
 			check(err)
 		}
 
-		time.Sleep(time.Second * time.Duration(rand.Int31n(int32(delay))))
+		time.Sleep(time.Second * time.Duration(int32(delay)))
 	}
 }
 

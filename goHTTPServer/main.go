@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-var delay time.Duration = 10
+var delay time.Duration = 60
 
 var times []int
 var mux sync.Mutex
@@ -100,21 +100,26 @@ func main() {
 		// process file into times
 		filter, err := strconv.Atoi(time.Now().Add(-(time.Second * delay)).Format("20060102150405"))
 		check(err)
-
-		file, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND, 0666)
-		defer file.Close()
-		check(err)
-		fileScanner := bufio.NewScanner(file)
-
-		for fileScanner.Scan() {
-			tnum, err := strconv.Atoi(fileScanner.Text())
+		/*
+			err = decrypt("../key", filename)
+			defer encrypt("../key", filename)
+		*/
+		if err == nil {
+			file, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND, 0666)
 			check(err)
-			if tnum >= filter {
-				times = append(times, tnum)
+			fileScanner := bufio.NewScanner(file)
+
+			for fileScanner.Scan() {
+				tnum, err := strconv.Atoi(fileScanner.Text())
+				check(err)
+				if tnum >= filter {
+					times = append(times, tnum)
+				}
 			}
 		}
 
 		file, err = os.Create(filename)
+		defer file.Close()
 		check(err)
 
 		filsMux.Lock()
@@ -167,3 +172,85 @@ func check(e error) {
 		//panic(e)
 	}
 }
+
+/*
+func encrypt(keyPath string, file string) error {
+	var plainText []byte
+
+	key, err := os.ReadFile(keyPath)
+	if err != nil {
+		return err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return err
+	}
+
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return err
+	}
+
+	cipherText := gcm.Seal(nonce, nonce, plainText, nil)
+
+	os.Create(file)
+
+	err = os.WriteFile(file, cipherText, 0777)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func decrypt(keyPath string, file string) error {
+
+	// Reading ciphertext file
+	cipherText, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+
+	// Reading key
+	key, err := os.ReadFile(keyPath)
+	if err != nil {
+		return err
+	}
+
+	// Creating block of algorithm
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return err
+	}
+
+	// Creating GCM mode
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return err
+	}
+
+	// Deattached nonce and decrypt
+	nonce := cipherText[:gcm.NonceSize()]
+	cipherText = cipherText[gcm.NonceSize():]
+	plainText, err := gcm.Open(nil, nonce, cipherText, nil)
+	if err != nil {
+		return err
+	}
+
+	os.Create(file)
+
+	// Writing decryption content
+	err = os.WriteFile(file, plainText, 0777)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+*/
